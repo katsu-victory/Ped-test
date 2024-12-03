@@ -9,6 +9,7 @@ df.columns = ["問番号", "設問内容の要約", "全体 (%)", "造血器腫�
 
 # アプリの作成
 app = dash.Dash(__name__, external_stylesheets=["https://cdn.jsdelivr.net/npm/bootswatch@5.2.3/dist/flatly/bootstrap.min.css"])
+app.title = "小児調査ダッシュボード"
 
 # 項目の順序を固定
 metric_order = ["全体 (%)", "造血器腫瘍 (%)", "固形腫瘍 (脳腫瘍を除く) (%)", "脳腫瘍 (%)"]
