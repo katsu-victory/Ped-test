@@ -2,6 +2,7 @@ import dash
 from dash import dcc, html, Input, Output, State
 import pandas as pd
 import plotly.express as px
+import dash_table
 
 # データの読み込み
 df = pd.read_csv("Book1.csv", encoding="utf-8-sig")
@@ -58,7 +59,23 @@ app.layout = html.Div([
 
     html.Div([
         html.H2("統計情報", className="text-secondary"),
-        html.Pre(id="stats", className="bg-light p-3 rounded"),
+        dash_table.DataTable(
+            id="stats_table",
+            columns=[{"name": col, "id": col} for col in df.describe().reset_index().columns],
+            data=df.describe().reset_index().to_dict("records"),
+            style_table={"overflowX": "auto"},
+            style_cell={
+                "textAlign": "center",
+                "minWidth": "150px",
+                "maxWidth": "150px",
+                "whiteSpace": "normal",
+            },
+            style_header={
+                "backgroundColor": "lightgrey",
+                "fontWeight": "bold",
+            },
+            className="bg-light p-3 rounded"
+        )
     ]),
 ], className="container mt-4")
 
@@ -66,7 +83,7 @@ app.layout = html.Div([
 @app.callback(
     [Output("data_table", "children"),
      Output("comparison_plot", "figure"),
-     Output("stats", "children")],
+     Output("stats_table", "data")],
     [Input("filter_btn", "n_clicks")],
     [State("selected_page", "value"),
      State("selected_metrics", "value")]
@@ -101,10 +118,12 @@ def update_dashboard(n_clicks, selected_page, selected_metrics):
         fig = px.bar(title="データが選択されていません")
     
     # 統計情報
-    stats = filtered_df[selected_metrics].describe().to_string() if selected_metrics else "選択されたデータがありません"
+    stats_data = filtered_df[selected_metrics].describe().reset_index().to_dict("records") if selected_metrics else []
     
-    return table, fig, stats
+    return table, fig, stats_data
+
 server = app.server
+
 # アプリの起動
 if __name__ == "__main__":
     app.run_server(debug=True)
