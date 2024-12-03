@@ -10,6 +10,9 @@ df.columns = ["問番号", "設問内容の要約", "全体 (%)", "造血器腫�
 # アプリの作成
 app = dash.Dash(__name__, external_stylesheets=["https://cdn.jsdelivr.net/npm/bootswatch@5.2.3/dist/flatly/bootstrap.min.css"])
 
+# 項目の順序を固定
+metric_order = ["全体 (%)", "造血器腫瘍 (%)", "固形腫瘍 (脳腫瘍を除く) (%)", "脳腫瘍 (%)"]
+
 # アプリのレイアウト
 app.layout = html.Div([
     html.Div([
@@ -107,16 +110,43 @@ def update_dashboard(n_clicks, selected_page, selected_metrics):
             id_vars=["問番号"], value_vars=selected_metrics,
             var_name="項目", value_name="値"
         )
+        # 順序を固定
+        long_data["項目"] = pd.Categorical(long_data["項目"], categories=metric_order, ordered=True)
+        long_data = long_data.sort_values(by=["問番号", "項目"])  # ソートして順序を保持
+
+        # 色を指定
+        color_map = {
+            "全体 (%)": "skyblue",
+            "造血器腫瘍 (%)": "pink",
+            "固形腫瘍 (脳腫瘍を除く) (%)": "lightgreen",
+            "脳腫瘍 (%)": "lavender"
+        }
         fig = px.bar(
             long_data, x="問番号", y="値", color="項目",
-            barmode="group", title="指標の比較"
+            barmode="group", title="指標の比較",
+            color_discrete_map=color_map
         )
-        fig.update_layout(yaxis=dict(range=[0, 100]))
+        # 背景色をグレーに設定
+        fig.update_layout(
+            yaxis=dict(range=[0, 100]),
+            plot_bgcolor="#f9f9f9",  # グラフ背景色
+            paper_bgcolor="#f9f9f9",  # 外側背景色
+            dragmode="zoom",  # ズームモードをデフォルトに設定
+        )
     else:
         fig = px.bar(title="データが選択されていません")
+        # dcc.Graphでズームバーを有効化
+    dcc.Graph(
+    id="comparison_plot",
+    figure=fig,
+    config={
+        "displayModeBar": True,  # モードバーを表示
+        "scrollZoom": True,      # スクロールでズーム可能にする
+    }
+)
     
     # 統計情報
-    stats_data = filtered_df[selected_metrics].describe().reset_index().to_dict("records") if selected_metrics else []
+    stats_data = filtered_df[selected_metrics].describe().round(1).reset_index().to_dict("records") if selected_metrics else []
     
     return table, fig, stats_data
 
