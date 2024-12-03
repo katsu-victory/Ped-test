@@ -1,8 +1,7 @@
 import dash
-from dash import dcc, html, Input, Output, State
+from dash import dcc, html, Input, Output, State, dash_table
 import pandas as pd
 import plotly.express as px
-import dash_table
 
 # データの読み込み
 df = pd.read_csv("Book1.csv", encoding="utf-8-sig")
@@ -73,8 +72,7 @@ app.layout = html.Div([
             style_header={
                 "backgroundColor": "lightgrey",
                 "fontWeight": "bold",
-            },
-            className="bg-light p-3 rounded"
+            }
         )
     ]),
 ], className="container mt-4")
