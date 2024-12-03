@@ -93,6 +93,8 @@ def update_dashboard(n_clicks, selected_page, selected_metrics):
     
     return table, fig, stats
 
+server = app.server
+
 # アプリの起動
 if __name__ == "__main__":
     app.run_server(debug=True)
