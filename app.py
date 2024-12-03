@@ -103,7 +103,7 @@ def update_dashboard(n_clicks, selected_page, selected_metrics):
     stats = filtered_df[selected_metrics].describe().to_string() if selected_metrics else "選択されたデータがありません"
     
     return table, fig, stats
-
+server = app.server
 # アプリの起動
 if __name__ == "__main__":
     app.run_server(debug=True)
