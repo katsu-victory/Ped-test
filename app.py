@@ -94,8 +94,7 @@ def update_dashboard(n_clicks, selected_page, selected_metrics):
         )
         fig = px.bar(
             long_data, x="問番号", y="値", color="項目",
-            barmode="group", title="指標の比較",
-            category_orders={"項目": metric_order}
+            barmode="group", title="指標の比較"
         )
         fig.update_layout(yaxis=dict(range=[0, 100]))
     else:
