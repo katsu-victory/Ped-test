@@ -7,9 +7,12 @@ import plotly.express as px
 df = pd.read_csv("Book1.csv", encoding="utf-8-sig")
 df.columns = ["問番号", "設問内容の要約", "全体 (%)", "造血器腫瘍 (%)", "固形腫瘍 (脳腫瘍を除く) (%)", "脳腫瘍 (%)"]
 
+# 表示用に問番号と設問内容を結合
+df["表示用"] = df["問番号"] + " - " + df["設問内容の要約"]
+
 # アプリの作成
 app = dash.Dash(__name__, external_stylesheets=["https://cdn.jsdelivr.net/npm/bootswatch@5.2.3/dist/flatly/bootstrap.min.css"])
-app.title = "小児調査ダッシュボード"
+app.title = "R1小児調査報告書データ"
 
 # 項目の順序を固定
 metric_order = ["全体 (%)", "造血器腫瘍 (%)", "固形腫瘍 (脳腫瘍を除く) (%)", "脳腫瘍 (%)"]
@@ -17,7 +20,7 @@ metric_order = ["全体 (%)", "造血器腫瘍 (%)", "固形腫瘍 (脳腫瘍を
 # アプリのレイアウト
 app.layout = html.Div([
     html.Div([
-        html.H1("小児調査データダッシュボード", className="text-center text-primary mb-4"),
+        html.H1("R1小児調査報告書データ", className="text-center text-primary mb-4"),
     ], className="bg-light p-3"),
 
     html.Div([
@@ -25,7 +28,7 @@ app.layout = html.Div([
             html.Label("問番号を選択:", className="form-label"),
             dcc.Dropdown(
                 id="selected_page",
-                options=[{"label": i, "value": i} for i in df["問番号"].unique()],
+                options=[{"label": row["表示用"], "value": row["問番号"]} for _, row in df.iterrows()],
                 multi=True,
                 className="form-select"
             ),
@@ -51,13 +54,13 @@ app.layout = html.Div([
     ], className="p-3 border rounded shadow-sm mb-4"),
 
     html.Div([
-        html.H2("データテーブル", className="text-secondary"),
-        html.Div(id="data_table", className="table-responsive"),
+        html.H2("項目比較", className="text-secondary"),
+        dcc.Graph(id="comparison_plot"),
     ], className="mb-4"),
 
     html.Div([
-        html.H2("項目比較", className="text-secondary"),
-        dcc.Graph(id="comparison_plot"),
+        html.H2("データテーブル", className="text-secondary"),
+        html.Div(id="data_table", className="table-responsive"),
     ], className="mb-4"),
 
     html.Div([
@@ -96,12 +99,15 @@ def update_dashboard(n_clicks, selected_page, selected_metrics):
     else:
         filtered_df = df[df["問番号"].isin(selected_page)]
     
+    # データテーブルから「表示用」列を除外
+    filtered_df_without_display = filtered_df.drop(columns=["表示用"])
+
     # データテーブル
     table = html.Table([
-        html.Thead(html.Tr([html.Th(col) for col in filtered_df.columns])),
+        html.Thead(html.Tr([html.Th(col) for col in filtered_df_without_display.columns])),
         html.Tbody([
-            html.Tr([html.Td(filtered_df.iloc[i][col]) for col in filtered_df.columns])
-            for i in range(len(filtered_df))
+            html.Tr([html.Td(filtered_df_without_display.iloc[i][col]) for col in filtered_df_without_display.columns])
+            for i in range(len(filtered_df_without_display))
         ])
     ], className="table table-striped")
     
@@ -136,15 +142,6 @@ def update_dashboard(n_clicks, selected_page, selected_metrics):
         )
     else:
         fig = px.bar(title="データが選択されていません")
-        # dcc.Graphでズームバーを有効化
-    dcc.Graph(
-    id="comparison_plot",
-    figure=fig,
-    config={
-        "displayModeBar": True,  # モードバーを表示
-        "scrollZoom": True,      # スクロールでズーム可能にする
-    }
-)
     
     # 統計情報
     stats_data = filtered_df[selected_metrics].describe().round(1).reset_index().to_dict("records") if selected_metrics else []
