@@ -85,6 +85,12 @@ app.layout = html.Div([
     ], className="mb-4"),
 
     html.Div([
+    html.H2("相関ヒートマップ", className="text-secondary"),
+    dcc.Graph(id="heatmap"),
+    ], className="mb-4"),
+
+
+    html.Div([
         html.H2("データテーブル", className="text-secondary"),
         html.Div(id="data_table", className="table-responsive"),
     ], className="mb-4"),
@@ -137,6 +143,44 @@ def toggle_section_1(n_clicks, style):
         else:
             return {"display": "none"}
     return style
+
+@app.callback(
+    Output("heatmap", "figure"),
+    [Input("filter_btn", "n_clicks")],  # フィルタリングボタンがクリックされたとき
+    [State("selected_page", "value"),
+     State("selected_metrics", "value")]
+)
+def update_correlation_heatmap(n_clicks, selected_page, selected_metrics):
+    if not selected_metrics:
+        return px.imshow(
+            [[0]],  # 空のデータ
+            labels={"x": "指標", "y": "指標", "color": "相関"},
+            text_auto=True
+        ).update_layout(title="相関を表示するデータが選択されていません")
+    
+    # フィルタリングされたデータ
+    if not selected_page:
+        filtered_df = df[selected_metrics]
+    else:
+        filtered_df = df[df["問番号"].isin(selected_page)][selected_metrics]
+    
+    # 相関行列の計算
+    correlation_matrix = filtered_df.corr()
+
+    # ヒートマップの作成
+    fig = px.imshow(
+        correlation_matrix,
+        text_auto=True,
+        color_continuous_scale="RdBu_r",
+        labels={"x": "指標", "y": "指標", "color": "相関"},
+        zmin=-1, zmax=1
+    )
+    fig.update_layout(
+        title="選択されたデータの相関ヒートマップ",
+        plot_bgcolor="#f9f9f9",
+        paper_bgcolor="#f9f9f9"
+    )
+    return fig
 
 # コールバックの定義
 @app.callback(
