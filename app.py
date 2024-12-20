@@ -10,6 +10,14 @@ df.columns = ["問番号", "設問内容の要約", "全体 (%)", "造血器腫�
 # 表示用に問番号と設問内容を結合
 df["表示用"] = df["問番号"] + " - " + df["設問内容の要約"]
 
+# テキストファイルの読み込み
+def load_text(file_path):
+    with open(file_path, "r", encoding="utf-8") as file:
+        return file.read()
+    
+intro_text = load_text("Introduction.txt")  # はじめに
+section_1_text = load_text("Section 1.txt")   # 概要説明
+
 # アプリの作成
 app = dash.Dash(__name__, external_stylesheets=["https://cdn.jsdelivr.net/npm/bootswatch@5.2.3/dist/flatly/bootstrap.min.css"])
 app.title = "R1小児調査報告書データ"
@@ -22,6 +30,24 @@ app.layout = html.Div([
     html.Div([
         html.H1("R1小児調査報告書データ", className="text-center text-primary mb-4"),
     ], className="bg-light p-3"),
+
+    # 「はじめに」のセクション
+    html.Div([
+        html.H2("はじめに", id="intro-title", style={
+            "cursor": "pointer", "backgroundColor": "#f8f9fa", "padding": "10px",
+            "borderRadius": "5px", "transition": "background-color 0.3s ease"
+        }, className="text-primary"),
+        html.Div(dcc.Markdown(intro_text), id="intro-content", style={"display": "none"}, className="p-3 bg-light border rounded"),
+    ], className="mb-4"),
+
+    # 「概要説明」のセクション
+    html.Div([
+        html.H2("概要説明", id="section-1-title", style={
+            "cursor": "pointer", "backgroundColor": "#f8f9fa", "padding": "10px",
+            "borderRadius": "5px", "transition": "background-color 0.3s ease"
+        }, className="text-primary"),
+        html.Div(dcc.Markdown(section_1_text), id="section-1-content", style={"display": "none"}, className="p-3 bg-light border rounded"),
+    ], className="mb-4"),
 
     html.Div([
         html.Div([
@@ -83,6 +109,34 @@ app.layout = html.Div([
         )
     ]),
 ], className="container mt-4")
+
+# コールバック: 「はじめに」の展開/折りたたみ
+@app.callback(
+    Output("intro-content", "style"),
+    [Input("intro-title", "n_clicks")],
+    [State("intro-content", "style")]
+)
+def toggle_intro(n_clicks, style):
+    if n_clicks:
+        if style["display"] == "none":
+            return {"display": "block"}
+        else:
+            return {"display": "none"}
+    return style
+
+# コールバック: 「概要説明」の展開/折りたたみ
+@app.callback(
+    Output("section-1-content", "style"),
+    [Input("section-1-title", "n_clicks")],
+    [State("section-1-content", "style")]
+)
+def toggle_section_1(n_clicks, style):
+    if n_clicks:
+        if style["display"] == "none":
+            return {"display": "block"}
+        else:
+            return {"display": "none"}
+    return style
 
 # コールバックの定義
 @app.callback(
